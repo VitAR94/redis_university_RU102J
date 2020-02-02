@@ -118,4 +118,35 @@ public class JedisBasicsTest {
         String diameter = jedis.hget("earth", "diameterKM");
         assertThat(diameter, is(earthProperties.get("diameterKM")));
     }
+    
+    @Test
+    public void runTransaction() {
+        jedis.set("a", "foo");
+        jedis.set("b", "bar");
+        jedis.set("c", "baz");
+        Transaction t = jedis.multi();
+
+        Response<String> r1 = t.set("b", "1");
+        Response<Long> r2 = t.incr("a");
+        Response<String> r3 = t.set("c", "100");
+
+        t.exec();
+        r1.get();
+//        r2.get();//здесь падает!
+        r3.get();
+    }
+
+    @Test
+    public void testHangHW12() {
+        JedisPoolConfig cfg = new JedisPoolConfig();
+        System.out.println(cfg.getMaxTotal());
+        cfg.setMaxTotal(10);//если не выставить - зависнет
+        JedisPool jedisPool = new JedisPool(cfg, "localhost", 6379);
+
+        for (int i=0; i < 10; i++) {
+            Jedis jedis = jedisPool.getResource();
+            jedis.set(String.valueOf(i), "0");
+            System.out.println(String.valueOf(i) + " " + jedis.get(String.valueOf(i)));
+        }
+    }
 }
