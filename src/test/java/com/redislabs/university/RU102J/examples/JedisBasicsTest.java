@@ -2,7 +2,7 @@ package com.redislabs.university.RU102J.examples;
 
 import com.redislabs.university.RU102J.HostPort;
 import org.junit.*;
-import redis.clients.jedis.Jedis;
+import redis.clients.jedis.*;
 
 import java.util.*;
 
