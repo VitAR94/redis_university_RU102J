@@ -67,10 +67,10 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
     }
 
     // Challenge #5
-    private Set<Site> findSitesByGeoWithCapacity(GeoQuery query) {
-        return Collections.emptySet();
-    }
-    /* UNCOMMENT this method for Challenge #5
+    //private Set<Site> findSitesByGeoWithCapacity(GeoQuery query) {
+    //    return Collections.emptySet();
+    //}
+    // UNCOMMENT this method for Challenge #5
     private Set<Site> findSitesByGeoWithCapacity(GeoQuery query) {
         Set<Site> results = new HashSet<>();
         Coordinate coord = query.getCoordinate();
@@ -79,7 +79,8 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
 
          try (Jedis jedis = jedisPool.getResource()) {
              // START Challenge #5
-
+			 List<GeoRadiusResponse> radiusResponses = jedis.georadius(
+                     RedisSchema.getSiteGeoKey(), coord.getLng(), coord.getLat(), radius, radiusUnit);
              // END Challenge #5
 
              Set<Site> sites = radiusResponses.stream()
@@ -88,7 +89,12 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
                      .map(Site::new).collect(Collectors.toSet());
 
              // START Challenge #5
-
+			 Map<Long, Response<Double>> scores = new HashMap<>(sites.size());
+             Pipeline p = jedis.pipelined();
+             for (Site site : sites) {
+                 scores.put(site.getId(), p.zscore(RedisSchema.getCapacityRankingKey(), String.valueOf(site.getId())));
+             }
+             p.sync();
              // END Challnege #5
 
              for (Site site : sites) {
@@ -99,7 +105,7 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
          }
 
          return results;
-    } */
+    }
 
     private Set<Site> findSitesByGeo(GeoQuery query) {
         Coordinate coord = query.getCoordinate();
